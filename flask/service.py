@@ -40,7 +40,7 @@ def gen_rand():
 
     randlist = []
     for i in range(count):
-        randlist.append(random.random))
+        randlist.append(random.random)
 
     retval = {}
     retval['count'] = count
