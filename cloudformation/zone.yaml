@@ -1,0 +1,36 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: |
+  Template to create a new zone.
+
+Parameters:
+  ZoneName:
+    Type: String
+    Default: knoxpy.cowell.org
+
+Resources:
+  HostedZone:
+    Type: AWS::Route53::HostedZone
+    Properties:
+      Name: !Ref ZoneName
+
+Outputs:
+  NameServers:
+    Value:
+      Fn::Join:
+        - ','
+        - !GetAtt HostedZone.NameServers
+    Export:
+      Name: !Sub "${AWS::StackName}-NameServers"
+  HostedZoneNameFQDN:
+    Value: !Sub "${ZoneName}."
+    Export:
+      Name: !Sub "${AWS::StackName}-HostedZoneNameFQDN"
+  HostedZoneName:
+    Value: !Sub "${ZoneName}"
+    Export:
+      Name: !Sub "${AWS::StackName}-HostedZoneName"
+  HostedZoneId:
+    Value:
+      !Ref HostedZone
+    Export:
+      Name: !Sub "${AWS::StackName}-HostedZoneId"
