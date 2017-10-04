@@ -137,8 +137,12 @@ Resources:
                   - arn:aws:s3:::knoxpy/*
               - Effect: Allow
                 Action:
-                  - api:*
+                  - apigateway:*
                   - lambda:*
+                  - cloudformation:*
+                  - s3:*
+                  - logs:*
+                  - iam:*
                 Resource:
                   - '*'
 
@@ -161,6 +165,57 @@ Resources:
 
   Workstation:
     Type: AWS::EC2::Instance
+    Metadata:
+      AWS::CloudFormation::Init:
+        config:
+          packages:
+            apt:
+              python: []
+              python3-pip: []
+              virtualenv: []
+              awscli: []
+              nodejs: []
+              npm : []
+          files:
+            /home/ubuntu/.ssh/knoxpysshkey:
+              owner: ubuntu
+              group: ubuntu
+              mode: 000600
+              content: |
+                -----BEGIN RSA PRIVATE KEY-----
+                MIIEpgIBAAKCAQEA1yfvZmky7BqfJrMJwCc9uPzQQvk4z4khVf1/jpZJPmlI78M8
+                HfhIXJ/83AOVx3Gh/Fo/Uvxuu/MJ6hdnGvrWCW34QmmatqnYUTRA5RpIRco/Up9Q
+                2hm1Yi908Npv4WWx4eLjuvbJWO1Njbt/u9Qlzgcfhrqd8a0eDTDUUh9HhjG92v0d
+                00ddwScVVcgyVpLWtWIlxVk5oOlaIhG40eFh2fnWTNiOWXWLYOcoDp7RxCaa9yfg
+                8q6UwnIeTaYXIcdB9p80vzHiD/9N0dEbS3YWlTz6Gq9/za0IzM3lSF81x4gAVUQT
+                fUVOsYGNsCIELy9Lc0VDVSMmL8KafsjmoC9PZwIDAQABAoIBAQDEkwsKUVEiIEyK
+                Sge9lNyyt+D7X8JE8zAO5ZX2S17N89mcnY6+fwp1/gJDbc8Zsrth2X6DrnjppWrI
+                gutD3itR4DRzURL2kwU9Y/VqnHGtudPTBBYVvmlXNK6uI5UWpRg5nleciT96zQ0P
+                UmCo1nJX43AtYzFNDnMncBZ8lXF+qySiV8iFgZp6zHSLkv0U2GOc3GQVWyvOb8hL
+                vpANTE4FHlp27JUtw5aZ3wj9pYA8DLNEwaKMIIADOpVLcDHndkYxPv9MccGYeODc
+                v9f+j4GLe6+ZLqF5EWqlHrRqeyKPXyHq1LyhMo0lesqgZJ5Eb8ob//UAxi6FM+lN
+                oyMuqLe5AoGBAPDA8daiWL2upzJttwjK7VYIMc5A2YuQGXHmLVtw8ouC8sGxuZaL
+                2J4RQBE9shlaGS33fWpDRCGNjjI7UYGkVS70nsyxPKma6SM6Jri6B91kbctYnNio
+                q9MH4Mtl6s2xFC9EPLaw7zPVVwdKtYyHIMu5NSJB2TKIs0Sli94OnVvtAoGBAOTI
+                AVr7Gpo4xOuW/EhVZdbqSORB3o0S55KkT79TOXJLBUleK5Nm2G9m6Z+8+BohlHN6
+                cZ/uaxqDkYuRBJSi60NIpMtiPCZXZV4IILVsmZAgmIvrmWG79TXK5/A5V4nokd4Q
+                YWAdv5L2BjEhZonxN7LtDkg+ZJqCGNIDaM1E7vYjAoGBAO4SblOH0Ocpma61beUk
+                /lMv4UiLOlTXV0IZksq0wzQQdsvxWouzmK6eclNaRg7p2LJq5Ts6b1oap/2mSPBB
+                N/cp8QqLTWiOhnLOY1ISrApS8HvAEcHx8Y/KX5HjI7DppgMjoEIsby47jkboquTf
+                DyBF8nQA164wHc4JQmmA3Dz1AoGBAIneVaLES+XAbDslA+d7PyHikgasAze0usTO
+                LBi6SJYty4PJMi1j/u4zcHqI4GKu9c0ZbrvYa8bQnrcir0X7YBduAZFnI6RfaoDe
+                GQf76BbI7eT0F7ykDkNagadshupesvjFmkjX5IjlphmZbTeXm99BqCe1Id9Soy58
+                S33YGsFNAoGBAJ2QRSjYBxOws7ISzfm/59jU2DNrHzRKgsDfu5f3vYcP6xJYzYxP
+                FRHXzwGMPF4zYeFYTXI23FOSULdY1RRry+CGWrCuW1vhN6Hoz796G/cLO7LFnwRf
+                juxRjq3ct/cBHRsaFZ2MK9RTMhcUJ1LXnY/kSIW2f7DvEPlKcyEdFDFc
+                -----END RSA PRIVATE KEY-----
+            /home/ubuntu/.ssh/knoxpysshkey.pub:
+              owner: ubuntu
+              group: ubuntu
+              mode: 000644
+              content: |
+                ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQDXJ+9maTLsGp8mswnAJz24/NBC+TjPiSFV/X+Olkk+aUjvwzwd+Ehcn/zcA5XHcaH8Wj9S/G678wnqF2ca+tYJbfhCaZq2qdhRNEDlGkhFyj9Sn1DaGbViL3Tw2m/hZbHh4uO69slY7U2Nu3+71CXOBx+Gup3xrR4NMNRSH0eGMb3a/R3TR13BJxVVyDJWkta1YiXFWTmg6VoiEbjR4WHZ+dZM2I5ZdYtg5ygOntHEJpr3J+DyrpTCch5Nphchx0H2nzS/MeIP/03R0RtLdhaVPPoar3/NrQjMzeVIXzXHiABVRBN9RU6xgY2wIgQvL0tzRUNVIyYvwpp+yOagL09n andy@shoggoth
+
     Properties:
       InstanceType: !Ref InstanceType
       IamInstanceProfile: !Ref WorkstationProfile
@@ -183,11 +238,10 @@ Resources:
           #!/bin/bash -xe
 
           apt update
-          apt install python python-pip python3-pip virtualenv awscli nodejs npm -y
-
+          apt install python-pip -y
           pip install https://s3.amazonaws.com/cloudformation-examples/aws-cfn-bootstrap-latest.tar.gz
           ln -s /root/aws-cfn-bootstrap-latest/init/ubuntu/cfn-hup /etc/init.d/cfn-hup
-          # cfn-init -c default
+          cfn-init -s ${AWS::StackName} -r Workstation --region=${AWS::Region} -c default
 
           cd /home/ubuntu
           su ubuntu -c "git clone https://github.com/vt102/knoxpy-serverless.git"
