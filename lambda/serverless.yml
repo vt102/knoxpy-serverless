@@ -20,7 +20,9 @@ service: lambda-service
 provider:
   name: aws
   runtime: python3.6
-
+  stage: prod
+  region: us-east-2
+  
 # you can overwrite defaults here
 #  stage: dev
 #  region: us-east-1

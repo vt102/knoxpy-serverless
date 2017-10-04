@@ -4,8 +4,9 @@ import json
 from uuid import uuid4
 
 def gen_uuid(event, context):
+    print(json.dumps(event, indent=4))
     count = 1
-    if 'count' in event['queryStringParameters']:
+    if event['queryStringParameters'] and 'count' in event['queryStringParameters']:
         count = int(event['queryStringParameters']['count'])
 
     uuidlist = []

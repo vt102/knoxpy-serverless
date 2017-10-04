@@ -5,13 +5,13 @@ import random
 
 def gen_rand(event, context):
     count = 1
-    if 'count' in event['queryStringParameters']:
-        count = int(event['queryStringParameters']['count'])
-
     seed = None
-    if 'seed' in event['queryStringParameters']:
-        seed = int(event['queryStringParameters']['seed'])
-        random.seed(seed)
+    if event['queryStringParameters']:
+        if 'count' in event['queryStringParameters']:
+            count = int(event['queryStringParameters']['count'])
+        if 'seed' in event['queryStringParameters']:
+            seed = int(event['queryStringParameters']['seed'])
+            random.seed(seed)
 
     randlist = []
     for i in range(count):
