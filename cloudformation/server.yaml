@@ -176,11 +176,12 @@ Resources:
               awscli: []
               nodejs: []
               npm : []
+              jq : []
           files:
             /home/ubuntu/.ssh/knoxpysshkey:
-              owner: ubuntu
-              group: ubuntu
-              mode: 000600
+              owner: "ubuntu"
+              group: "ubuntu"
+              mode: "000600"
               content: |
                 -----BEGIN RSA PRIVATE KEY-----
                 MIIEpgIBAAKCAQEA1yfvZmky7BqfJrMJwCc9uPzQQvk4z4khVf1/jpZJPmlI78M8
@@ -210,9 +211,9 @@ Resources:
                 juxRjq3ct/cBHRsaFZ2MK9RTMhcUJ1LXnY/kSIW2f7DvEPlKcyEdFDFc
                 -----END RSA PRIVATE KEY-----
             /home/ubuntu/.ssh/knoxpysshkey.pub:
-              owner: ubuntu
-              group: ubuntu
-              mode: 000644
+              owner: "ubuntu"
+              group: "ubuntu"
+              mode: "000644"
               content: |
                 ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQDXJ+9maTLsGp8mswnAJz24/NBC+TjPiSFV/X+Olkk+aUjvwzwd+Ehcn/zcA5XHcaH8Wj9S/G678wnqF2ca+tYJbfhCaZq2qdhRNEDlGkhFyj9Sn1DaGbViL3Tw2m/hZbHh4uO69slY7U2Nu3+71CXOBx+Gup3xrR4NMNRSH0eGMb3a/R3TR13BJxVVyDJWkta1YiXFWTmg6VoiEbjR4WHZ+dZM2I5ZdYtg5ygOntHEJpr3J+DyrpTCch5Nphchx0H2nzS/MeIP/03R0RtLdhaVPPoar3/NrQjMzeVIXzXHiABVRBN9RU6xgY2wIgQvL0tzRUNVIyYvwpp+yOagL09n andy@shoggoth
 
