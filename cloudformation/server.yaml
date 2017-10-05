@@ -216,6 +216,19 @@ Resources:
               mode: "000644"
               content: |
                 ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQDXJ+9maTLsGp8mswnAJz24/NBC+TjPiSFV/X+Olkk+aUjvwzwd+Ehcn/zcA5XHcaH8Wj9S/G678wnqF2ca+tYJbfhCaZq2qdhRNEDlGkhFyj9Sn1DaGbViL3Tw2m/hZbHh4uO69slY7U2Nu3+71CXOBx+Gup3xrR4NMNRSH0eGMb3a/R3TR13BJxVVyDJWkta1YiXFWTmg6VoiEbjR4WHZ+dZM2I5ZdYtg5ygOntHEJpr3J+DyrpTCch5Nphchx0H2nzS/MeIP/03R0RtLdhaVPPoar3/NrQjMzeVIXzXHiABVRBN9RU6xgY2wIgQvL0tzRUNVIyYvwpp+yOagL09n andy@shoggoth
+            /home/ubuntu/index.html:
+              owner: "ubuntu"
+              group: "ubuntu"
+              mode: "000644"
+              content: |
+                <HTML>
+                <HEAD>
+                <TITLE>Welcome to KnoxPy!</TITLE>
+                </HEAD>
+                <BODY>
+                <A href="knoxpysshkey">SSH key to use for tonight's workshop.</A>
+                </BODY>
+                </HTML>
 
     Properties:
       InstanceType: !Ref InstanceType
@@ -254,6 +267,9 @@ Resources:
           update-alternatives --install /usr/bin/node node /usr/bin/nodejs 10
           npm install -g serverless
 
+          aws --region ${AWS::Region} s3 cp /home/ubuntu/.ssh/knoxpysshkey s3://web-${AWS::StackName}.knoxpy.cowell.org --acl public-read
+          aws --region ${AWS::Region} s3 cp /home/ubuntu/index.html s3://web-${AWS::StackName}.knoxpy.cowell.org --acl public-read
+
           cfn-signal --success=true --stack=${AWS::StackName} --resource=Workstation --region=${AWS::Region}
 
     CreationPolicy:
@@ -290,7 +306,7 @@ Resources:
       Type: CNAME
       TTL: 60
       ResourceRecords:
-        - !GetAtt WebBucket.DomainName
+        - !Sub "web-${AWS::StackName}.knoxpy.cowell.org.s3-website.us-east-2.amazonaws.com"
 
 Outputs:
   PublicIp:
