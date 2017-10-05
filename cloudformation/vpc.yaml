@@ -1,0 +1,133 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: |
+  VPC template for 1 AZ, no private subnets.
+
+Parameters:
+  PublicSubnetCIDR0:
+    AllowedPattern: (\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})/(\d{1,2})
+    ConstraintDescription: must be a valid IP CIDR range of the form x.x.x.x/x.
+    Default: 10.1.0.0/24
+    Description: IP Address range for the Public Subnet 0
+    MaxLength: '18'
+    MinLength: '9'
+    Type: String
+  VPCCIDR:
+    AllowedPattern: (\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})/(\d{1,2})
+    ConstraintDescription: must be a valid IP CIDR range of the form x.x.x.x/x.
+    Default: 10.21.0.0/21
+    Description: IP Address range for the VPC
+    MaxLength: '18'
+    MinLength: '9'
+    Type: String
+
+Resources:
+  InternetGateway:
+    Properties:
+      Tags:
+      - Key: Name
+        Value: !Join ['-', [!Ref 'AWS::StackName', PublicSubnets]]
+    Type: AWS::EC2::InternetGateway
+  InternetGatewayAttachment:
+    Properties:
+      InternetGatewayId: !Ref 'InternetGateway'
+      VpcId: !Ref 'VPC'
+    Type: AWS::EC2::VPCGatewayAttachment
+  InternetRouteTable:
+    Properties:
+      Tags:
+      - Key: IoCluster
+        Value: !Ref 'AWS::StackName'
+      - Key: Name
+        Value: !Join ['-', [!Ref 'AWS::StackName', routeTable]]
+      VpcId: !Ref 'VPC'
+    Type: AWS::EC2::RouteTable
+  PublicRoute:
+    Properties:
+      DestinationCidrBlock: 0.0.0.0/0
+      GatewayId: !Ref 'InternetGateway'
+      RouteTableId: !Ref 'InternetRouteTable'
+    Type: AWS::EC2::Route
+  PublicSubnet0:
+    Properties:
+      AvailabilityZone: !Select [0, !GetAZs '']
+      CidrBlock: !Ref 'PublicSubnetCIDR0'
+      Tags:
+      - Key: Application
+        Value: !Ref 'AWS::StackName'
+      - Key: Name
+        Value: PublicSubnet0
+      - Key: Network
+        Value: VPN Connected Subnet
+      VpcId: !Ref 'VPC'
+    Type: AWS::EC2::Subnet
+  PublicSubnetRouteAssoc0:
+    Properties:
+      RouteTableId: !Ref 'InternetRouteTable'
+      SubnetId: !Ref 'PublicSubnet0'
+    Type: AWS::EC2::SubnetRouteTableAssociation
+  VPC:
+    Properties:
+      CidrBlock: !Ref 'VPCCIDR'
+      EnableDnsHostnames: 'true'
+      EnableDnsSupport: 'true'
+      Tags:
+      - Key: Application
+        Value: !Ref 'AWS::StackName'
+      - Key: Name
+        Value: !Ref 'AWS::StackName'
+      - Key: Network
+        Value: VPN Connected VPC
+    Type: AWS::EC2::VPC
+  FlowLogRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+        - Effect: Allow
+          Principal:
+            Service:
+              - vpc-flow-logs.amazonaws.com
+          Action:
+            - sts:AssumeRole
+      Path: /
+      Policies:
+        -
+          PolicyName: root
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              -
+                Effect: Allow
+                Action: '*'
+                Resource: '*'
+  VPCFlowLog:
+    Type: AWS::EC2::FlowLog
+    Properties:
+      DeliverLogsPermissionArn: !GetAtt [ 'FlowLogRole', 'Arn' ]
+      LogGroupName: !Sub '${AWS::StackName}-FlowLogs'
+      ResourceId: !Ref VPC
+      ResourceType: 'VPC'
+      TrafficType: 'ALL'
+
+Outputs:
+  CIDROutput:
+    Description: CIDR Range of the VPC
+    Export:
+      Name: !Join ['-', [!Ref 'AWS::StackName', CIDR]]
+    Value: !Ref 'VPCCIDR'
+  InternetRouteTable:
+    Description: Route table of the VPC
+    Export:
+      Name: !Join ['-', [!Ref 'AWS::StackName', RouteTable]]
+    Value: !Ref 'InternetRouteTable'
+  PublicSubnet0:
+    Description: PublicSubnet0
+    Export:
+      Name: !Join ['-', [!Ref 'AWS::StackName', PublicSubnet0]]
+    Value: !Ref 'PublicSubnet0'
+  VPCId:
+    Description: VPCId of the newly created VPC
+    Export:
+      Name: !Join ['-', [!Ref 'AWS::StackName', VPCId]]
+    Value: !Ref 'VPC'

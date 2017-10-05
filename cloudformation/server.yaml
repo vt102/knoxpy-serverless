@@ -1,0 +1,313 @@
+Parameters:
+  OS:
+    Type: String
+    Default: ubuntu16
+  KeyName:
+    Type: String
+    Default: knoxpysshkey
+  InstanceType:
+    Type: String
+    Default: t2.small
+  VpcStack:
+    Type: String
+    Default: knoxpyvpc
+  ZoneStack:
+    Type: String
+    Default: knoxpydns
+
+Mappings:
+  RegionAmiMap:
+    "ap-south-1":
+      "aws": "ami-2ec08741"
+      "debian8": "ami-9a83f5f5"
+      "ubuntu16": "ami-021f676d"
+      "ubuntu17": "ami-de413bb1"
+    "eu-west-2":
+      "aws": "ami-8e6b78ea"
+      "debian8": "ami-87848ee3"
+      "ubuntu16": "ami-895a4bed"
+      "ubuntu17": "ami-fb97869f"
+    "eu-west-1":
+      "aws": "ami-ca18d8b3"
+      "debian8": "ami-402f1a33"
+      "ubuntu16": "ami-b1a749c8"
+      "ubuntu17": "ami-1446b66d"
+    "ap-northeast-2":
+      "aws": "ami-401dc62e"
+      "debian8": "ami-6d8b5a03"
+      "ubuntu16": "ami-15419f7b"
+      "ubuntu17": "ami-9776aff9"
+    "ap-northeast-1":
+      "aws": "ami-d424e7b2"
+      "debian8": "ami-dbc0bcbc"
+      "ubuntu16": "ami-d1b355b7"
+      "ubuntu17": "ami-1913e77f"
+    "sa-east-1":
+      "aws": "ami-0de09261"
+      "debian8": "ami-b256ccde"
+      "ubuntu16": "ami-8bff8be7"
+      "ubuntu17": "ami-411a6b2d"
+    "ca-central-1":
+      "aws": "ami-53d16837"
+      "debian8": "ami-a1fe43c5"
+      "ubuntu16": "ami-c23788a6"
+      "ubuntu17": "ami-c2c779a6"
+    "ap-southeast-1":
+      "aws": "ami-b5147ed6"
+      "debian8": "ami-0842e96b"
+      "ubuntu16": "ami-07fb6b64"
+      "ubuntu17": "ami-032fb460"
+    "ap-southeast-2":
+      "aws": "ami-2fe6014d"
+      "debian8": "ami-881317eb"
+      "ubuntu16": "ami-079a8664"
+      "ubuntu17": "ami-e41a0287"
+    "eu-central-1":
+      "aws": "ami-156bdc7a"
+      "debian8": "ami-5900cc36"
+      "ubuntu16": "ami-08c86567"
+      "ubuntu17": "ami-ec832a83"
+    "us-east-1":
+      "aws": "ami-5e8c9625"
+      "debian8": "ami-b14ba7a7"
+      "ubuntu16": "ami-ae6272b8"
+      "ubuntu17": "ami-7b4d7900"
+    "us-east-2":
+      "aws": "ami-380f2d5d"
+      "debian8": "ami-b2795cd7"
+      "ubuntu16": "ami-c16343a4"
+      "ubuntu17": "ami-44bf9f21"
+    "us-west-1":
+      "aws": "ami-ee8cbb8e"
+      "debian8": "ami-94bdeef4"
+      "ubuntu16": "ami-79517819"
+      "ubuntu17": "ami-039ab163"
+    "us-west-2":
+      "aws": "ami-7d837305"
+      "debian8": "ami-221ea342"
+      "ubuntu16": "ami-613d2418"
+      "ubuntu17": "ami-7105e609"
+
+Resources:
+
+  WebBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName:
+        Fn::Join:
+          - '.'
+          - - !Sub "web-${AWS::StackName}"
+            - Fn::ImportValue:
+                !Sub "${ZoneStack}-HostedZoneName"
+      AccessControl: "PublicRead"
+      WebsiteConfiguration:
+        IndexDocument: index.html
+
+  WorkstationProfile:
+    Type: AWS::IAM::InstanceProfile
+    Properties:
+      Path: /
+      Roles:
+        - !Ref WorkstationRole
+
+  WorkstationRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Action:
+              - sts:AssumeRole
+            Effect: Allow
+            Principal:
+              Service:
+                - ec2.amazonaws.com
+      Path: /
+      Policies:
+        -
+          PolicyName: S3AccessPolicy
+          PolicyDocument:
+            Version: 2012-10-17
+            Statement:
+              - Effect: Allow
+                Action:
+                  - s3:PutObject
+                Resource:
+                  - arn:aws:s3:::knoxpy
+                  - arn:aws:s3:::knoxpy/*
+              - Effect: Allow
+                Action:
+                  - apigateway:*
+                  - lambda:*
+                  - cloudformation:*
+                  - s3:*
+                  - logs:*
+                  - iam:*
+                Resource:
+                  - '*'
+
+  ExternalSecGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: "External access to items in this template."
+      VpcId:
+        Fn::ImportValue:
+          !Sub "${VpcStack}-VPCId"
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 22
+          ToPort: 22
+          CidrIp: 0.0.0.0/0
+        - IpProtocol: tcp
+          FromPort: 8088
+          ToPort: 8088
+          CidrIp: 0.0.0.0/0
+
+  Workstation:
+    Type: AWS::EC2::Instance
+    Metadata:
+      AWS::CloudFormation::Init:
+        config:
+          packages:
+            apt:
+              python: []
+              python3-pip: []
+              virtualenv: []
+              awscli: []
+              nodejs: []
+              npm : []
+              jq : []
+          files:
+            /home/ubuntu/.ssh/knoxpysshkey:
+              owner: "ubuntu"
+              group: "ubuntu"
+              mode: "000600"
+              content: |
+                -----BEGIN RSA PRIVATE KEY-----
+                MIIEpgIBAAKCAQEA1yfvZmky7BqfJrMJwCc9uPzQQvk4z4khVf1/jpZJPmlI78M8
+                HfhIXJ/83AOVx3Gh/Fo/Uvxuu/MJ6hdnGvrWCW34QmmatqnYUTRA5RpIRco/Up9Q
+                2hm1Yi908Npv4WWx4eLjuvbJWO1Njbt/u9Qlzgcfhrqd8a0eDTDUUh9HhjG92v0d
+                00ddwScVVcgyVpLWtWIlxVk5oOlaIhG40eFh2fnWTNiOWXWLYOcoDp7RxCaa9yfg
+                8q6UwnIeTaYXIcdB9p80vzHiD/9N0dEbS3YWlTz6Gq9/za0IzM3lSF81x4gAVUQT
+                fUVOsYGNsCIELy9Lc0VDVSMmL8KafsjmoC9PZwIDAQABAoIBAQDEkwsKUVEiIEyK
+                Sge9lNyyt+D7X8JE8zAO5ZX2S17N89mcnY6+fwp1/gJDbc8Zsrth2X6DrnjppWrI
+                gutD3itR4DRzURL2kwU9Y/VqnHGtudPTBBYVvmlXNK6uI5UWpRg5nleciT96zQ0P
+                UmCo1nJX43AtYzFNDnMncBZ8lXF+qySiV8iFgZp6zHSLkv0U2GOc3GQVWyvOb8hL
+                vpANTE4FHlp27JUtw5aZ3wj9pYA8DLNEwaKMIIADOpVLcDHndkYxPv9MccGYeODc
+                v9f+j4GLe6+ZLqF5EWqlHrRqeyKPXyHq1LyhMo0lesqgZJ5Eb8ob//UAxi6FM+lN
+                oyMuqLe5AoGBAPDA8daiWL2upzJttwjK7VYIMc5A2YuQGXHmLVtw8ouC8sGxuZaL
+                2J4RQBE9shlaGS33fWpDRCGNjjI7UYGkVS70nsyxPKma6SM6Jri6B91kbctYnNio
+                q9MH4Mtl6s2xFC9EPLaw7zPVVwdKtYyHIMu5NSJB2TKIs0Sli94OnVvtAoGBAOTI
+                AVr7Gpo4xOuW/EhVZdbqSORB3o0S55KkT79TOXJLBUleK5Nm2G9m6Z+8+BohlHN6
+                cZ/uaxqDkYuRBJSi60NIpMtiPCZXZV4IILVsmZAgmIvrmWG79TXK5/A5V4nokd4Q
+                YWAdv5L2BjEhZonxN7LtDkg+ZJqCGNIDaM1E7vYjAoGBAO4SblOH0Ocpma61beUk
+                /lMv4UiLOlTXV0IZksq0wzQQdsvxWouzmK6eclNaRg7p2LJq5Ts6b1oap/2mSPBB
+                N/cp8QqLTWiOhnLOY1ISrApS8HvAEcHx8Y/KX5HjI7DppgMjoEIsby47jkboquTf
+                DyBF8nQA164wHc4JQmmA3Dz1AoGBAIneVaLES+XAbDslA+d7PyHikgasAze0usTO
+                LBi6SJYty4PJMi1j/u4zcHqI4GKu9c0ZbrvYa8bQnrcir0X7YBduAZFnI6RfaoDe
+                GQf76BbI7eT0F7ykDkNagadshupesvjFmkjX5IjlphmZbTeXm99BqCe1Id9Soy58
+                S33YGsFNAoGBAJ2QRSjYBxOws7ISzfm/59jU2DNrHzRKgsDfu5f3vYcP6xJYzYxP
+                FRHXzwGMPF4zYeFYTXI23FOSULdY1RRry+CGWrCuW1vhN6Hoz796G/cLO7LFnwRf
+                juxRjq3ct/cBHRsaFZ2MK9RTMhcUJ1LXnY/kSIW2f7DvEPlKcyEdFDFc
+                -----END RSA PRIVATE KEY-----
+            /home/ubuntu/.ssh/knoxpysshkey.pub:
+              owner: "ubuntu"
+              group: "ubuntu"
+              mode: "000644"
+              content: |
+                ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQDXJ+9maTLsGp8mswnAJz24/NBC+TjPiSFV/X+Olkk+aUjvwzwd+Ehcn/zcA5XHcaH8Wj9S/G678wnqF2ca+tYJbfhCaZq2qdhRNEDlGkhFyj9Sn1DaGbViL3Tw2m/hZbHh4uO69slY7U2Nu3+71CXOBx+Gup3xrR4NMNRSH0eGMb3a/R3TR13BJxVVyDJWkta1YiXFWTmg6VoiEbjR4WHZ+dZM2I5ZdYtg5ygOntHEJpr3J+DyrpTCch5Nphchx0H2nzS/MeIP/03R0RtLdhaVPPoar3/NrQjMzeVIXzXHiABVRBN9RU6xgY2wIgQvL0tzRUNVIyYvwpp+yOagL09n andy@shoggoth
+            /home/ubuntu/index.html:
+              owner: "ubuntu"
+              group: "ubuntu"
+              mode: "000644"
+              content: |
+                <HTML>
+                <HEAD>
+                <TITLE>Welcome to KnoxPy!</TITLE>
+                </HEAD>
+                <BODY>
+                <A href="knoxpysshkey">SSH key to use for tonight's workshop.</A>
+                </BODY>
+                </HTML>
+
+    Properties:
+      InstanceType: !Ref InstanceType
+      IamInstanceProfile: !Ref WorkstationProfile
+      ImageId:
+        Fn::FindInMap:
+          - RegionAmiMap
+          - !Ref AWS::Region
+          - !Ref OS
+      KeyName: !Ref KeyName
+      NetworkInterfaces:
+        - AssociatePublicIpAddress: "true"
+          DeviceIndex: 0
+          GroupSet:
+            - !Ref ExternalSecGroup
+          SubnetId:
+            Fn::ImportValue:
+              !Sub "${VpcStack}-PublicSubnet0"
+      UserData:
+        Fn::Base64: !Sub |
+          #!/bin/bash -xe
+
+          apt update
+          apt install python-pip -y
+          pip install https://s3.amazonaws.com/cloudformation-examples/aws-cfn-bootstrap-latest.tar.gz
+          ln -s /root/aws-cfn-bootstrap-latest/init/ubuntu/cfn-hup /etc/init.d/cfn-hup
+          cfn-init -s ${AWS::StackName} -r Workstation --region=${AWS::Region} -c default
+
+          cd /home/ubuntu
+          su ubuntu -c "git clone https://github.com/vt102/knoxpy-serverless.git"
+          cd knoxpy-serverless
+          su ubuntu -c "virtualenv -p `which python3` .env"
+          su ubuntu -c "virtualenv -p `which python3` .env --relocatable"
+          su ubuntu -c ". .env/bin/activate ; pip install -r requirements.txt"
+
+          update-alternatives --install /usr/bin/node node /usr/bin/nodejs 10
+          npm install -g serverless
+
+          aws --region ${AWS::Region} s3 cp /home/ubuntu/.ssh/knoxpysshkey s3://web-${AWS::StackName}.knoxpy.cowell.org --acl public-read
+          aws --region ${AWS::Region} s3 cp /home/ubuntu/index.html s3://web-${AWS::StackName}.knoxpy.cowell.org --acl public-read
+
+          cfn-signal --success=true --stack=${AWS::StackName} --resource=Workstation --region=${AWS::Region}
+
+    CreationPolicy:
+      ResourceSignal:
+        Timeout: "PT5M"
+
+  DnsName:
+    Type: AWS::Route53::RecordSet
+    Properties:
+      HostedZoneName:
+        Fn::ImportValue: !Sub "${ZoneStack}-HostedZoneNameFQDN"
+      Name:
+        Fn::Join:
+          - '.'
+          - - !Sub "${AWS::StackName}"
+            - Fn::ImportValue:
+                !Sub "${ZoneStack}-HostedZoneNameFQDN"
+      ResourceRecords:
+        - !GetAtt Workstation.PublicIp
+      Type: A
+      TTL: 60
+
+  StaticSiteDnsName:
+    Type: AWS::Route53::RecordSet
+    DependsOn: Workstation
+    Properties:
+      Name:
+        Fn::Join:
+          - '.'
+          - - !Sub "web-${AWS::StackName}"
+            - Fn::ImportValue: !Sub "${ZoneStack}-HostedZoneNameFQDN"
+      HostedZoneId:
+        Fn::ImportValue: !Sub "${ZoneStack}-HostedZoneId"
+      Type: CNAME
+      TTL: 60
+      ResourceRecords:
+        - !Sub "web-${AWS::StackName}.knoxpy.cowell.org.s3-website.us-east-2.amazonaws.com"
+
+Outputs:
+  PublicIp:
+    Value: !GetAtt Workstation.PublicIp
